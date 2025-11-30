@@ -63,9 +63,11 @@ class CategoryScraper(BaseScraper):
         # 1. Fetch the page (handle pagination if you want extra credit,
         #    but single page is fine for MVP).
         soup = self.get_soup(self.base_url)
-
+        if not soup:
+            return []
         # 2. Find all book articles (look for <article class="product_pod">).
         books = soup.find_all(class_="product_pod")
+        books_found = []
 
         # 3. Extract Title, Price (remove the £ symbol and convert to float),
         #    and Rating (convert "Three" class to int 3 or keep as string).
@@ -75,11 +77,10 @@ class CategoryScraper(BaseScraper):
             # Get the price
             price = book.find(class_="price_color").text[2:]
             # Get the rating
-            rating = Rating[
-                book.find("p", class_=re.compile(r"star-rating"))["class"][1]].value
-            b = Book(title, price, rating)
+            rating = Rating[book.find("p", class_=re.compile(r"star-rating"))["class"][1]].value
             # 4. Create Book objects and append to self.books.
-            self.books.append(b)
+            books_found.append(Book(title, price, rating))
+        return books_found
 
 # 4. VISUALIZATION
 class DataVisualizer:
@@ -116,13 +117,13 @@ if __name__ == "__main__":
 
     # Initialize Scrapers -> Get Books
     travelBookScraper = CategoryScraper(travel_url)
-    travelBookScraper.scrape()
+    travel_books = travelBookScraper.scrape()
     mysteryBookScraper = CategoryScraper(mystery_url)
-    mysteryBookScraper.scrape()
+    mystery_books = mysteryBookScraper.scrape()
 
     #Visualize the data
     dataVisualizer = DataVisualizer()
-    genre_to_list = {'Travel':travelBookScraper.books, 'Mystery':mysteryBookScraper.books}
+    genre_to_list = {'Travel':travel_books, 'Mystery':mystery_books}
     dataVisualizer.plot_price_distribution(genre_to_list)
 
     
